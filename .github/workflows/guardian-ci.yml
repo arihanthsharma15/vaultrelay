@@ -1,0 +1,40 @@
+name: Guardian CI
+
+on:
+  push:
+    paths:
+      - 'guardian/**'
+  pull_request:
+    paths:
+      - 'guardian/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: guardian
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint
+        working-directory: guardian
+        run: |
+          pip install ruff
+          ruff check app/
+
+      - name: Run tests
+        working-directory: guardian
+        run: |
+          pip install pytest
+          pytest tests/ -v
