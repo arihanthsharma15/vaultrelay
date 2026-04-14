@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 app = FastAPI(
     title="VaultRelay Guardian",
-    description="Cloud gateway for VaultRelay — zero-trust middleware for legacy databases.",
+    description="Cloud gateway for VaultRelay.",
     version="0.1.0",
 )
 
