@@ -28,3 +28,7 @@ sentry/bin/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local env files
+backend/guardian/.env
+backend/sentry/.env

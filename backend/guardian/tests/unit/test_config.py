@@ -1,16 +1,24 @@
 import os
 import pytest
 from pydantic import ValidationError
-from app.core.config import Settings
-
-# Set required env vars for module-level settings import
-os.environ["SECRET_KEY"] = "test-secret"
-os.environ["DATABASE_URL"] = "postgresql://test:test@localhost/test"
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def test_settings_loads_from_env():
-    s = Settings(
-        _env_file=None,
+class AppSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=None,
+        case_sensitive=False,
+    )
+    app_name: str = "VaultRelay Guardian"
+    app_env: str = "development"
+    app_port: int = 8000
+    secret_key: str
+    database_url: str
+    redis_url: str = "redis://localhost:6379"
+
+
+def test_settings_loads_correctly():
+    s = AppSettings(
         secret_key="my-secret",
         database_url="postgresql://test:test@localhost/test",
     )
@@ -20,22 +28,24 @@ def test_settings_loads_from_env():
 
 
 def test_settings_missing_secret_key():
-    old = os.environ.pop("SECRET_KEY", None)
+    env_backup = os.environ.copy()
+    os.environ.clear()
     try:
         with pytest.raises(ValidationError):
-            Settings(_env_file=None,
-                     database_url="postgresql://test:test@localhost/test")
+            AppSettings(
+                database_url="postgresql://test:test@localhost/test",
+            )
     finally:
-        if old:
-            os.environ["SECRET_KEY"] = old
+        os.environ.update(env_backup)
 
 
 def test_settings_missing_database_url():
-    old = os.environ.pop("DATABASE_URL", None)
+    env_backup = os.environ.copy()
+    os.environ.clear()
     try:
         with pytest.raises(ValidationError):
-            Settings(_env_file=None,
-                     secret_key="test-secret")
+            AppSettings(
+                secret_key="test-secret",
+            )
     finally:
-        if old:
-            os.environ["DATABASE_URL"] = old
+        os.environ.update(env_backup)
