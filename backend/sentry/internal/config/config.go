@@ -6,18 +6,22 @@ import (
 )
 
 type Config struct {
-	TenantID   string
-	Secret     string
-	DBDSN      string
+	TenantID    string
+	Secret      string
+	DBDSN       string
 	GuardianURL string
+	RowLimit    int
+	QueryTimeout int
 }
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		TenantID:    os.Getenv("VAULTRELAY_TENANT_ID"),
-		Secret:      os.Getenv("VAULTRELAY_SECRET"),
-		DBDSN:       os.Getenv("DB_DSN"),
-		GuardianURL: os.Getenv("GUARDIAN_URL"),
+		TenantID:     os.Getenv("VAULTRELAY_TENANT_ID"),
+		Secret:       os.Getenv("VAULTRELAY_SECRET"),
+		DBDSN:        os.Getenv("DB_DSN"),
+		GuardianURL:  os.Getenv("GUARDIAN_URL"),
+		RowLimit:     1000,
+		QueryTimeout: 30,
 	}
 
 	if cfg.TenantID == "" {
