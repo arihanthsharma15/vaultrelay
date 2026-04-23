@@ -1,0 +1,12 @@
+
+# Python cache
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+backend/guardian/venv/
+
+# Local env files
+backend/guardian/.env
+backend/sentry/.env
