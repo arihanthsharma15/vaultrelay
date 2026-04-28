@@ -1,6 +1,6 @@
 # VaultRelay — Build Progress
 
-> **Current Phase:** Phase 1 — Foundation
+> **Current Phase:** Phase 2 — Intelligence
 > **Last Updated:** April 2026
 > **Stack:** Guardian (Python/FastAPI) + Sentry (Go)
 
@@ -51,6 +51,9 @@ Two components:
 | #4 | `chore/sentry-scaffold` | Go module, config loader, /health handler, Dockerfile | ✅ Merged |
 | #10 | `feature/sentry-startup-selfcheck` | 4 startup checks, refuses to start on failure | ✅ Merged |
 | #11 | `feature/sentry-db-pool` | Connection pool, query executor, row/size/timeout limits | ✅ Merged |
+| #13 | `feature/sentry-sql-validator` | SELECT only enforcement, injection prevention, 9 tests | ✅ Merged |
+| #14 | `feature/sentry-tunnel-client` | WebSocket client, heartbeat, auto reconnect, query handler | ✅ Merged |
+| #15 | `feature/sentry-query-execution` | Wire everything, graceful shutdown, full query flow | ✅ Merged |
 
 ---
 
@@ -71,11 +74,12 @@ Two components:
 | WebSocket tunnel server | ✅ Done |
 | HMAC message signing | ✅ Done |
 | Heartbeat handling | ✅ Done |
-| Query routing by tenant | ⬜ Pending |
-| NL-to-SQL (Claude Sonnet) | ⬜ Phase 2 |
-| PII redaction engine | ⬜ Phase 2 |
-| Rate limiting (Redis) | ⬜ Phase 2 |
-| Audit logging | ⬜ Phase 2 |
+| NL-to-SQL (Claude Sonnet) | ⬜ Phase 2 — PR #16 |
+| Schema metadata registry | ⬜ Phase 2 — PR #17 |
+| PII redaction engine | ⬜ Phase 2 — PR #18 |
+| Rate limiting (Redis) | ⬜ Phase 2 — PR #19 |
+| Audit logging | ⬜ Phase 2 — PR #20 |
+| Multi-turn conversation context | ⬜ Phase 2 — PR #21 |
 | RBAC — Viewer, Analyst, Admin | ⬜ Phase 3 |
 
 ### Sentry (/backend/sentry)
@@ -89,10 +93,13 @@ Two components:
 | Query executor + row limits | ✅ Done |
 | Query timeout (30s default) | ✅ Done |
 | Result size limit (10MB) | ✅ Done |
-| SQL validator (SELECT only) | ⬜ Next — PR #12 |
-| WebSocket tunnel client | ⬜ Next — PR #13 |
-| Query execution end to end | ⬜ Next — PR #14 |
-| Graceful shutdown (SIGTERM) | ⬜ Pending |
+| SQL validator (SELECT only) | ✅ Done |
+| WebSocket tunnel client | ✅ Done |
+| Heartbeat every 30s | ✅ Done |
+| Auto reconnect with backoff | ✅ Done |
+| Query execution end to end | ✅ Done |
+| Graceful shutdown (SIGTERM) | ✅ Done |
+| MySQL + SQL Server support | ⬜ Phase 2 |
 
 ---
 
@@ -101,14 +108,14 @@ Two components:
 | Service | Test Type | Count | Status |
 |---|---|---|---|
 | Guardian | Unit tests | 21 | ✅ Passing |
-| Sentry | Unit tests | 6 | ✅ Passing |
+| Sentry | Unit tests | 15 | ✅ Passing |
 
 ---
 
 ## Phase Roadmap
 
 ### Phase 1 — Foundation
-Weeks 1-6 · In Progress
+Weeks 1-6 · ✅ COMPLETE
 ✅ Monorepo scaffold
 ✅ CI/CD pipelines
 ✅ Guardian skeleton
@@ -119,21 +126,24 @@ Weeks 1-6 · In Progress
 ✅ WebSocket tunnel server (Guardian)
 ✅ Sentry startup self-check
 ✅ PostgreSQL connection pool (Sentry)
-⬜ SQL validator (Sentry)           — PR #12
-⬜ WebSocket tunnel client (Sentry) — PR #13
-⬜ Query execution end to end       — PR #14
-⬜ Integration tests                — PR #15
+✅ SQL validator (Sentry)
+✅ WebSocket tunnel client (Sentry)
+✅ Query execution end to end
+✅ Graceful shutdown
+
+---
 
 ### Phase 2 — Intelligence
-Weeks 7-12 · Not Started
-⬜ Claude Sonnet NL-to-SQL integration
-⬜ Schema metadata registry
-⬜ SQL validation layer (Guardian)
-⬜ PII redaction engine
-⬜ Rate limiting — Redis backed
-⬜ Audit logging
-⬜ Multi-turn conversation context
-⬜ MySQL + SQL Server support in Sentry
+Weeks 7-12 · 🔄 In Progress
+⬜ PR #16 — Claude Sonnet NL-to-SQL integration
+⬜ PR #17 — Schema metadata registry
+⬜ PR #18 — PII redaction engine
+⬜ PR #19 — Rate limiting — Redis backed
+⬜ PR #20 — Audit logging
+⬜ PR #21 — Multi-turn conversation context
+⬜ PR #22 — MySQL + SQL Server support in Sentry
+
+---
 
 ### Phase 3 — Hardening
 Weeks 13-18 · Not Started
@@ -147,6 +157,8 @@ Weeks 13-18 · Not Started
 ⬜ Operator dashboard
 ⬜ GDPR + HIPAA self assessment
 ⬜ Load testing at 2x peak
+
+---
 
 ### Phase 4 — Stabilisation
 Weeks 19-26 · Not Started
@@ -166,26 +178,36 @@ Weeks 19-26 · Not Started
 | Component | Language | Framework | Key Libraries |
 |---|---|---|---|
 | Guardian | Python 3.12 | FastAPI 0.115 | SQLAlchemy 2.0, Pydantic 2.8, Alembic, asyncpg |
-| Sentry | Go 1.22 | stdlib | net/http, database/sql, lib/pq |
+| Sentry | Go 1.22 | stdlib | net/http, database/sql, lib/pq, gorilla/websocket |
 | Database | PostgreSQL 16 | — | — |
 | Cache | Redis 7 | — | — |
 | CI/CD | — | GitHub Actions | ruff, pytest, go vet, go test |
 
 ---
 
-## Next Up
+## Architecture
+User
+↓ REST API (X-API-Key auth)
+Guardian (FastAPI — Cloud)
+↓ NL-to-SQL (Claude Sonnet)
+↓ SQL validation (SELECT only)
+↓ WebSocket tunnel (HMAC signed)
+Sentry (Go — Customer infrastructure)
+↓ SQL validation (last line of defence)
+↓ PostgreSQL connection pool
+↓ Query execution (30s timeout, 1000 row limit)
+↑ JSON result set
+Guardian
+↓ PII redaction
+↓ Audit logging
+User ← safe result
 
-**PR #12 — feature/sentry-sql-validator**
-SELECT only enforcement. Any DDL, DML, or stored procedure call rejected before execution.
+---
 
-**PR #13 — feature/sentry-tunnel-client**
-Sentry connects to Guardian via WebSocket. HMAC signed messages. Heartbeat every 30 seconds. Auto reconnect.
+## Next Up — Phase 2 Start
 
-**PR #14 — feature/sentry-query-execution**
-Full query flow. Guardian sends SQL to Sentry, Sentry executes, results back to Guardian.
-
-**PR #15 — feature/integration-tests**
-End to end round trip. Phase 1 complete.
+**PR #16 — `feature/guardian-nl-to-sql`**
+Integrate Claude Sonnet API. Accept natural language query. Generate SQL. Return to user.
 
 ---
 
