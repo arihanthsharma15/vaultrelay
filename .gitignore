@@ -1,8 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Python cache
 **/__pycache__/
-*.pyc
-*.pyo
 
 # Virtual environment
 backend/guardian/venv/
@@ -10,3 +21,20 @@ backend/guardian/venv/
 # Local env files
 backend/guardian/.env
 backend/sentry/.env
+
+# Go
+sentry/bin/
+*.exe
+*.out
+
+# Docker
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
