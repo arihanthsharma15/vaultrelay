@@ -74,12 +74,12 @@ Two components:
 | WebSocket tunnel server | ✅ Done |
 | HMAC message signing | ✅ Done |
 | Heartbeat handling | ✅ Done |
-| NL-to-SQL (Claude Sonnet) | ⬜ Phase 2 — PR #16 |
-| Schema metadata registry | ⬜ Phase 2 — PR #17 |
-| PII redaction engine | ⬜ Phase 2 — PR #18 |
-| Rate limiting (Redis) | ⬜ Phase 2 — PR #19 |
-| Audit logging | ⬜ Phase 2 — PR #20 |
-| Multi-turn conversation context | ⬜ Phase 2 — PR #21 |
+| NL-to-SQL (Claude Sonnet) | ⬜ Phase 2 — PR #18 |
+| Schema metadata registry | ⬜ Phase 2 — PR #19 |
+| PII redaction engine | ⬜ Phase 2 — PR #20 |
+| Rate limiting (Redis) | ⬜ Phase 2 — PR #21 |
+| Audit logging | ⬜ Phase 2 — PR #22 |
+| Multi-turn conversation context | ⬜ Phase 2 — PR #23 |
 | RBAC — Viewer, Analyst, Admin | ⬜ Phase 3 |
 
 ### Sentry (/backend/sentry)
@@ -116,6 +116,7 @@ Two components:
 
 ### Phase 1 — Foundation
 Weeks 1-6 · ✅ COMPLETE
+_Last Phase 1 PR:_ **#17**
 ✅ Monorepo scaffold
 ✅ CI/CD pipelines
 ✅ Guardian skeleton
@@ -135,13 +136,13 @@ Weeks 1-6 · ✅ COMPLETE
 
 ### Phase 2 — Intelligence
 Weeks 7-12 · 🔄 In Progress
-⬜ PR #16 — Claude Sonnet NL-to-SQL integration
-⬜ PR #17 — Schema metadata registry
-⬜ PR #18 — PII redaction engine
-⬜ PR #19 — Rate limiting — Redis backed
-⬜ PR #20 — Audit logging
-⬜ PR #21 — Multi-turn conversation context
-⬜ PR #22 — MySQL + SQL Server support in Sentry
+⬜ PR #18 — Claude Sonnet NL-to-SQL integration
+⬜ PR #19 — Schema metadata registry
+⬜ PR #20 — PII redaction engine
+⬜ PR #21 — Rate limiting — Redis backed
+⬜ PR #22 — Audit logging
+⬜ PR #23 — Multi-turn conversation context
+⬜ PR #24 — MySQL + SQL Server support in Sentry
 
 ---
 
@@ -206,8 +207,10 @@ User ← safe result
 
 ## Next Up — Phase 2 Start
 
-**PR #16 — `feature/guardian-nl-to-sql`**
+**PR #18 — `feature/guardian-nl-to-sql`**
 Integrate Claude Sonnet API. Accept natural language query. Generate SQL. Return to user.
+
+All Phase 2 feature PRs merge into `develop`.
 
 ---
 
