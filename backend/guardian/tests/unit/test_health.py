@@ -1,8 +1,10 @@
 import os
+
 os.environ["SECRET_KEY"] = "test-secret"
 os.environ["DATABASE_URL"] = "postgresql://test:test@localhost/test"
 
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)
