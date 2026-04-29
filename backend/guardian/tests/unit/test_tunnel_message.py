@@ -1,4 +1,5 @@
 import os
+
 os.environ["SECRET_KEY"] = "test-secret"
 os.environ["DATABASE_URL"] = "postgresql://test:test@localhost/test"
 
