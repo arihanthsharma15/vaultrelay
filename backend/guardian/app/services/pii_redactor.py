@@ -1,7 +1,6 @@
 import re
 from typing import Any
 
-
 # Default PII patterns
 PII_PATTERNS = {
     "email": re.compile(
