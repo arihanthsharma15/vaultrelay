@@ -2,6 +2,12 @@ from groq import Groq
 
 from app.core.config import get_settings
 
+
+settings = get_settings()
+
+client = Groq(api_key=settings.groq_api_key)
+
+
 SYSTEM_PROMPT = """
 You are a PostgreSQL SQL generator.
 
@@ -15,17 +21,7 @@ RULES:
 """
 
 
-def get_groq_client():
-    settings = get_settings()
-
-    return Groq(api_key=settings.groq_api_key)
-
-
 async def generate_sql(question: str) -> str:
-    settings = get_settings()
-
-    client = get_groq_client()
-
     response = client.chat.completions.create(
         model=settings.groq_model,
         messages=[
