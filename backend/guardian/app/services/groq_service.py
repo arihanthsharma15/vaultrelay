@@ -1,5 +1,6 @@
-from app.core.config import get_settings
 from groq import Groq
+
+from app.core.config import get_settings
 
 settings = get_settings()
 
