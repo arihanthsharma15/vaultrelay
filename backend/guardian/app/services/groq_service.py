@@ -1,6 +1,7 @@
 from groq import Groq
 
 from app.core.config import get_settings
+from app.services.schema_service import build_schema_context, get_sample_schema
 
 settings = get_settings()
 
@@ -16,10 +17,16 @@ RULES:
 4. NEVER use markdown
 5. Return ONLY raw SQL
 6. LIMIT all queries to 100 rows
+7. Use ONLY the tables and columns provided in the schema
 """
 
 
 async def generate_sql(question: str) -> str:
+    schema = get_sample_schema()
+    schema_context = build_schema_context(schema)
+
+    prompt = f"{schema_context}\n\nQuestion: {question}"
+
     response = client.chat.completions.create(
         model=settings.groq_model,
         messages=[
@@ -29,7 +36,7 @@ async def generate_sql(question: str) -> str:
             },
             {
                 "role": "user",
-                "content": question,
+                "content": prompt,
             },
         ],
         temperature=0,
