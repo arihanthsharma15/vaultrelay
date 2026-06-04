@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
 from app.schemas.audit_log import AuditLogData
-from app.services.pii_redactor import redact_value
 
 
 async def log_request(db: AsyncSession, audit_data: AuditLogData) -> Optional[AuditLog]:
