@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from app.db.base import Base
 from app.models.tenant import Tenant  # noqa: F401
+from app.models.api_key import APIKey  # noqa: F401
+from app.models.schema import SchemaTable, SchemaColumn  # noqa: F401
+from app.models.audit_log import AuditLog  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
