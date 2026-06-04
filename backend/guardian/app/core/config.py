@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     groq_api_key: str
     groq_model: str = "llama-3.3-70b-versatile"
 
+    # Rate Limiting
+    rate_limit_enabled: bool = True
+    rate_limit_requests_per_minute: int = 100
+
 
 @lru_cache
 def get_settings() -> Settings:
