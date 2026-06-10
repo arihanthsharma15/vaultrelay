@@ -1,7 +1,7 @@
 # VaultRelay — Build Progress
 
 > **Current Phase:** Phase 2 — Intelligence
-> **Last Updated:** April 2026
+> **Last Updated:** June 10, 2026
 > **Stack:** Guardian (Python/FastAPI) + Sentry (Go)
 
 ---
@@ -44,6 +44,11 @@ Two components:
 | #6 | `feature/guardian-db-models` | SQLAlchemy async engine, Tenant model, Alembic migrations | ✅ Merged |
 | #7 | `feature/api-key-auth` | API key generation, SHA-256 hashing, auth dependency | ✅ Merged |
 | #9 | `feature/websocket-tunnel-server` | WS endpoint, HMAC signing, connection manager, heartbeat | ✅ Merged |
+| #19 | `feature/guardian-nl-to-sql` | Groq-powered NL-to-SQL pipeline and SQL validation | ✅ Merged |
+| #20 | `feature/guardian-schema-registry` | Schema models, context builder, aliases, PII marking | ✅ Merged |
+| #21 | `feature/guardian-pii-redaction` | Pattern and column-based PII redaction | ✅ Merged |
+| #22 | `feature/guardian-rate-limiting` | Redis sliding-window rate limiting | ✅ Merged |
+| #23 | `feature/guardian-audit-logging` | Audit model, migration, service, and middleware | ✅ Merged |
 
 ### Sentry — Go
 | PR | Branch | Description | Status |
@@ -74,12 +79,12 @@ Two components:
 | WebSocket tunnel server | ✅ Done |
 | HMAC message signing | ✅ Done |
 | Heartbeat handling | ✅ Done |
-| NL-to-SQL (Claude Sonnet) | ⬜ Phase 2 — PR #18 |
-| Schema metadata registry | ⬜ Phase 2 — PR #19 |
-| PII redaction engine | ⬜ Phase 2 — PR #20 |
-| Rate limiting (Redis) | ⬜ Phase 2 — PR #21 |
-| Audit logging | ⬜ Phase 2 — PR #22 |
-| Multi-turn conversation context | ⬜ Phase 2 — PR #23 |
+| NL-to-SQL (Groq) | ✅ Done |
+| Schema metadata registry | ✅ Done |
+| PII redaction engine | ✅ Done |
+| Rate limiting (Redis) | ✅ Done |
+| Audit logging | ✅ Done |
+| Multi-turn conversation context | ⬜ Phase 2 |
 | RBAC — Viewer, Analyst, Admin | ⬜ Phase 3 |
 
 ### Sentry (/backend/sentry)
@@ -107,8 +112,9 @@ Two components:
 
 | Service | Test Type | Count | Status |
 |---|---|---|---|
-| Guardian | Unit tests | 21 | ✅ Passing |
-| Sentry | Unit tests | 15 | ✅ Passing |
+| Guardian | Core unit tests | 53 | ✅ Passing |
+| Guardian | Endpoint/integration tests | 2 | ⚠️ Require service-backed test setup |
+| Sentry | Unit tests | 22 | ✅ Passing |
 
 ---
 
@@ -136,13 +142,13 @@ _Last Phase 1 PR:_ **#17**
 
 ### Phase 2 — Intelligence
 Weeks 7-12 · 🔄 In Progress
-⬜ PR #18 — Claude Sonnet NL-to-SQL integration
-⬜ PR #19 — Schema metadata registry
-⬜ PR #20 — PII redaction engine
-⬜ PR #21 — Rate limiting — Redis backed
-⬜ PR #22 — Audit logging
-⬜ PR #23 — Multi-turn conversation context
-⬜ PR #24 — MySQL + SQL Server support in Sentry
+✅ PR #19 — Groq NL-to-SQL integration
+✅ PR #20 — Schema metadata registry
+✅ PR #21 — PII redaction engine
+✅ PR #22 — Rate limiting — Redis backed
+✅ PR #23 — Audit logging
+⬜ Multi-turn conversation context
+⬜ MySQL + SQL Server support in Sentry
 
 ---
 
@@ -178,7 +184,7 @@ Weeks 19-26 · Not Started
 
 | Component | Language | Framework | Key Libraries |
 |---|---|---|---|
-| Guardian | Python 3.12 | FastAPI 0.115 | SQLAlchemy 2.0, Pydantic 2.8, Alembic, asyncpg |
+| Guardian | Python 3.12 | FastAPI 0.115 | SQLAlchemy 2.0, Pydantic 2.8, Alembic, asyncpg, Groq, Redis |
 | Sentry | Go 1.22 | stdlib | net/http, database/sql, lib/pq, gorilla/websocket |
 | Database | PostgreSQL 16 | — | — |
 | Cache | Redis 7 | — | — |
@@ -190,7 +196,7 @@ Weeks 19-26 · Not Started
 User
 ↓ REST API (X-API-Key auth)
 Guardian (FastAPI — Cloud)
-↓ NL-to-SQL (Claude Sonnet)
+↓ NL-to-SQL (Groq)
 ↓ SQL validation (SELECT only)
 ↓ WebSocket tunnel (HMAC signed)
 Sentry (Go — Customer infrastructure)
@@ -205,13 +211,13 @@ User ← safe result
 
 ---
 
-## Next Up — Phase 2 Start
+## Next Up
 
-**PR #18 — `feature/guardian-nl-to-sql`**
-Integrate Claude Sonnet API. Accept natural language query. Generate SQL. Return to user.
+**Multi-turn conversation context**
+Add tenant-scoped conversation history so follow-up questions can reuse earlier query context safely.
 
-All Phase 2 feature PRs merge into `develop`.
+Then extend Sentry with MySQL and SQL Server support.
 
 ---
 
-*VaultRelay · Build Progress · April 2026*
+*VaultRelay · Build Progress · June 2026*
