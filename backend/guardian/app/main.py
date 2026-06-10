@@ -12,9 +12,28 @@ from app.core.config import get_settings
 from app.db.session import get_db
 from app.schemas.audit_log import AuditLogData
 from app.services.audit_logger import log_request
+from app.services.rate_limiter import check_rate_limit
 
 logging.basicConfig(level=logging.INFO)
 settings = get_settings()
+
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        api_key = request.headers.get("X-API-Key")
+
+        if api_key:
+            tenant_id = request.path_params.get("tenant_id", "default")
+            api_key_hash = hash(api_key)
+
+            limit = settings.rate_limit_requests_per_minute
+            allowed = await check_rate_limit(tenant_id, str(api_key_hash), limit, 60)
+
+            if not allowed:
+                return Response("Rate limit exceeded", status_code=429)
+
+        response = await call_next(request)
+        return response
 
 
 class AuditLoggingMiddleware(BaseHTTPMiddleware):
@@ -53,12 +72,14 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
 
         return response
 
+
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
 )
 
 app.add_middleware(AuditLoggingMiddleware)
+app.add_middleware(RateLimitMiddleware)
 
 # Existing websocket routes
 app.include_router(ws_router)
