@@ -1,9 +1,11 @@
 import os
+
 os.environ["SECRET_KEY"] = "test-secret"
 os.environ["DATABASE_URL"] = "postgresql://test:test@localhost/test"
 
 import time
-from app.services.hmac import sign_message, verify_message, is_message_fresh
+
+from app.services.hmac import is_message_fresh, sign_message, verify_message
 
 
 def test_sign_and_verify():

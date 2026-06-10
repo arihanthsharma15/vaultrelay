@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379"
 
+    # Groq
+    groq_api_key: str
+    groq_model: str = "llama-3.3-70b-versatile"
+
 
 @lru_cache
 def get_settings() -> Settings:
