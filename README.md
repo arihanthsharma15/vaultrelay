@@ -1,101 +1,199 @@
 # VaultRelay
 
-> Zero-trust middleware for natural-language querying of legacy SQL databases.
+> Zero-trust middleware for secure natural-language querying of private SQL databases.
 
-VaultRelay lets users ask questions in plain English while keeping customer
-databases private. Guardian generates and validates SQL in the cloud; Sentry
-runs inside the customer network, validates the query again, and executes it
-with bounded access.
+VaultRelay enables users to query databases using plain English without exposing those databases to the public internet. The platform converts natural language into validated SQL, executes queries through a secure outbound-only tunnel, and returns redacted results to the user.
 
 ## Architecture
 
-- **Guardian** (`backend/guardian`) - FastAPI gateway for authentication,
-  Groq-powered NL-to-SQL, schema context, rate limiting, PII redaction, audit
-  logging, and WebSocket tunnel management.
-- **Sentry** (`backend/sentry`) - Go agent for startup checks, outbound tunnel
-  connectivity, SQL validation, PostgreSQL execution, and resource limits.
-- **PostgreSQL** - Tenant metadata, audit data, and the development query
-  target.
-- **Redis** - Sliding-window request rate limiting.
+### Guardian (`backend/guardian`)
+
+Cloud-hosted FastAPI gateway responsible for:
+
+* API authentication
+* Groq-powered NL-to-SQL generation
+* Schema-aware prompt construction
+* SQL validation and safety checks
+* Redis-backed rate limiting
+* PII redaction
+* Audit logging
+* WebSocket tunnel management
+
+### Sentry (`backend/sentry`)
+
+Customer-hosted Go agent responsible for:
+
+* Startup self-checks
+* Outbound-only WebSocket tunnel
+* Secondary SQL validation
+* PostgreSQL query execution
+* Query timeout enforcement
+* Result-size and row-count limits
+* Automatic reconnection and heartbeat handling
+
+### Infrastructure
+
+* PostgreSQL — tenant metadata, audit data, and development datasets
+* Redis — sliding-window rate limiting
+* Docker Compose — local development environment
 
 ```text
-User -> Guardian -> validated SQL -> outbound WebSocket tunnel -> Sentry
-User <- Guardian <- redacted result <- query execution <- PostgreSQL
+User
+ ↓
+Guardian (FastAPI)
+ ↓
+Groq NL→SQL
+ ↓
+SQL Validation
+ ↓
+HMAC-Signed WebSocket Tunnel
+ ↓
+Sentry (Go)
+ ↓
+PostgreSQL
+ ↓
+Query Result
+ ↓
+PII Redaction
+ ↓
+User
 ```
 
 ## Current Status
 
-Phase 2 is in progress. The following Guardian capabilities are implemented:
+### Phase 2 — Intelligence
 
-- Groq NL-to-SQL generation and SELECT-only validation
-- Schema metadata context and PII marking
-- Pattern-based and column-based PII redaction
-- Redis sliding-window rate limiting
-- Database-backed audit logging
+✅ Complete
 
-Sentry includes PostgreSQL pooling, query limits, SQL validation, tunnel
-reconnection, heartbeat handling, startup self-checks, and graceful shutdown.
+Implemented capabilities:
 
-See [docs/PROGRESS.md](docs/PROGRESS.md) for the detailed roadmap.
+* End-to-end NL-to-SQL query execution
+* Groq-powered SQL generation
+* Schema-aware context injection
+* SELECT-only SQL enforcement
+* Guardian-side SQL validation
+* Sentry-side SQL validation
+* HMAC-signed tunnel messaging
+* Request/response correlation across tunnel
+* Pattern-based PII redaction
+* Column-level PII suppression
+* Redis sliding-window rate limiting
+* Audit logging
+* WebSocket heartbeat monitoring
+* Automatic tunnel reconnection
+* PostgreSQL query execution with bounded limits
 
-### Prototype Limitations
+### Verified End-to-End Flow
 
-- The NL-to-SQL endpoint currently returns validated SQL; dispatching it to a
-  connected Sentry and awaiting the result is not wired yet.
-- Guardian verifies HMAC-signed tunnel messages, but Sentry-side message
-  signing still needs to be implemented.
-- The development tunnel uses `ws://`; production deployment requires TLS with
-  `wss://`.
+```text
+Question
+ ↓
+Groq
+ ↓
+Guardian Validation
+ ↓
+WebSocket Tunnel
+ ↓
+Sentry Validation
+ ↓
+PostgreSQL
+ ↓
+PII Redaction
+ ↓
+Response
+```
 
-## Test The Project
+## Quality Gates
 
-Install the Guardian dependencies in `backend/guardian/venv`, then run:
+Run the complete validation suite:
 
 ```bash
 ./scripts/test-all.sh
 ```
 
-The command runs:
+The script executes:
 
-- Ruff over Guardian application and test code
-- All Guardian unit and HTTP endpoint tests
-- `gofmt` verification for Sentry
-- `go vet ./...`
-- All Sentry tests
+* Ruff linting
+* Guardian unit tests
+* Guardian integration tests
+* gofmt verification
+* go vet
+* Sentry unit tests
 
 Current verified result:
 
 ```text
-Guardian: 55 passed
-Sentry:   22 passed
+Guardian: 55 tests passing
+Sentry:   22 tests passing
 ```
 
 ## Run Locally
 
-Set a Groq API key and start the development stack:
-
 ```bash
 export GROQ_API_KEY="your-key"
-docker-compose up --build
+
+docker compose up --build
 ```
 
-Guardian is exposed at `http://localhost:8000`, with health status at
-`http://localhost:8000/health`.
+Services:
+
+```text
+Guardian  -> http://localhost:8000
+Postgres  -> localhost:5432
+Redis     -> localhost:6379
+```
+
+Health endpoint:
+
+```text
+http://localhost:8000/health
+```
 
 ## Repository Structure
 
 ```text
 vaultrelay/
 ├── backend/
-│   ├── guardian/       # Python/FastAPI gateway
-│   └── sentry/         # Go local agent
-├── docs/               # PRD and progress documentation
-├── scripts/            # Development and validation scripts
-├── .github/workflows/  # Guardian and Sentry CI
-└── docker-compose.yml  # Local development stack
+│   ├── guardian/
+│   └── sentry/
+├── docs/
+├── scripts/
+├── .github/workflows/
+└── docker-compose.yml
 ```
 
-## Product Requirements
+## Current Limitations
 
-See [docs/VaultRelay-PRD-1.md](docs/VaultRelay-PRD-1.md) for the full product
-requirements and security model.
+* Development environment uses static schema metadata instead of tenant-managed schema discovery.
+* Conversation memory for multi-turn database interactions is not yet implemented.
+* Production deployment still requires TLS (`wss://`) and secret management hardening.
+* MySQL and SQL Server support are planned for Phase 3.
+
+## Documentation
+
+* `docs/PROGRESS.md` — roadmap and implementation status
+* `docs/VaultRelay-PRD-1.md` — product requirements document
+
+## Tech Stack
+
+### Guardian
+
+* Python 3.12
+* FastAPI
+* SQLAlchemy
+* PostgreSQL
+* Redis
+* Groq API
+
+### Sentry
+
+* Go 1.22
+* gorilla/websocket
+* database/sql
+* lib/pq
+
+### Infrastructure
+
+* Docker
+* Docker Compose
+* GitHub Actions
