@@ -1,20 +1,291 @@
-# VaultRelay — Build Progress
+## VaultRelay — Build Progress
 
-> **Current Phase:** Phase 2 — Intelligence
-> **Last Updated:** June 10, 2026
+> **Current Phase:** Phase 3 — Hardening
+> **Last Updated:** June 19, 2026
 > **Stack:** Guardian (Python/FastAPI) + Sentry (Go)
 
 ---
 
-## What is VaultRelay?
+# What is VaultRelay?
 
-A zero-trust middleware platform that enables secure natural-language querying of legacy SQL databases without ever exposing those databases to the public internet.
+VaultRelay is a zero-trust middleware platform that enables secure natural-language querying of SQL databases without exposing those databases to the public internet.
 
-Two components:
-- **Guardian** — Cloud gateway (FastAPI). Handles auth, NL-to-SQL, PII redaction, query routing.
-- **Sentry** — Local agent (Go). Runs on customer infrastructure. Executes validated SQL against local database.
+The platform consists of two components:
+
+### Guardian
+
+Cloud-hosted FastAPI service responsible for:
+
+* Authentication
+* NL-to-SQL generation
+* Schema-aware prompting
+* Query validation
+* PII redaction
+* Audit logging
+* Request routing
+
+### Sentry
+
+Customer-hosted Go agent responsible for:
+
+* Secure outbound tunnel creation
+* Query validation
+* Database execution
+* Result delivery
+
+No inbound firewall rules are required on customer infrastructure.
 
 ---
+
+# Current Status
+
+## Guardian (FastAPI)
+
+| Feature                         | Status    |
+| ------------------------------- | --------- |
+| FastAPI application             | ✅ Done    |
+| Health endpoint                 | ✅ Done    |
+| Environment validation          | ✅ Done    |
+| SQLAlchemy integration          | ✅ Done    |
+| Tenant models and migrations    | ✅ Done    |
+| API key authentication          | ✅ Done    |
+| WebSocket tunnel server         | ✅ Done    |
+| HMAC message signing            | ✅ Done    |
+| Heartbeat handling              | ✅ Done    |
+| Groq-powered NL-to-SQL          | ✅ Done    |
+| Schema registry                 | ✅ Done    |
+| PII redaction engine            | ✅ Done    |
+| Redis rate limiting             | ✅ Done    |
+| Audit logging                   | ✅ Done    |
+| Request correlation             | ✅ Done    |
+| Multi-turn conversation context | ⬜ Planned |
+
+---
+
+## Sentry (Go)
+
+| Feature                            | Status    |
+| ---------------------------------- | --------- |
+| Go service                         | ✅ Done    |
+| Health endpoint                    | ✅ Done    |
+| Configuration loader               | ✅ Done    |
+| Startup self-checks                | ✅ Done    |
+| PostgreSQL connection pool         | ✅ Done    |
+| Query execution                    | ✅ Done    |
+| Row limits                         | ✅ Done    |
+| Query timeout                      | ✅ Done    |
+| Result size limits                 | ✅ Done    |
+| SQL validation                     | ✅ Done    |
+| WebSocket tunnel client            | ✅ Done    |
+| Heartbeat system                   | ✅ Done    |
+| Auto reconnect                     | ✅ Done    |
+| Graceful shutdown                  | ✅ Done    |
+| Guardian ↔ Sentry query round-trip | ✅ Done    |
+| MySQL support                      | ⬜ Planned |
+| SQL Server support                 | ⬜ Planned |
+
+---
+
+# End-to-End Validation
+
+Validated against a seeded development database containing customer and order records.
+
+Successfully tested:
+
+* Customer retrieval queries
+* Filtered customer queries
+* Aggregation queries
+* GROUP BY queries
+* JOIN queries
+* Guardian ↔ Sentry communication
+* HMAC-signed tunnel communication
+* PII redaction workflow
+* Full NL → SQL → Database → Response pipeline
+
+Example execution flow:
+
+User Question
+↓
+Guardian (NL → SQL)
+↓
+SQL Validation
+↓
+HMAC-Signed WebSocket Tunnel
+↓
+Sentry
+↓
+PostgreSQL Execution
+↓
+JSON Result Set
+↓
+PII Redaction
+↓
+Safe Response Returned
+
+---
+
+# Test Coverage
+
+| Service  | Tests | Status    |
+| -------- | ----- | --------- |
+| Guardian | 55    | ✅ Passing |
+| Sentry   | 22    | ✅ Passing |
+
+Local quality gate:
+
+```bash
+./scripts/test-all.sh
+```
+
+Latest Result:
+
+✅ Guardian lint passing
+
+✅ Guardian tests passing
+
+✅ Sentry formatting passing
+
+✅ Sentry vet passing
+
+✅ Sentry tests passing
+
+✅ All checks passing
+
+---
+
+# Tech Stack
+
+| Component  | Technology           |
+| ---------- | -------------------- |
+| Guardian   | Python 3.12, FastAPI |
+| Sentry     | Go 1.22              |
+| Database   | PostgreSQL 16        |
+| Cache      | Redis 7              |
+| LLM        | Groq                 |
+| ORM        | SQLAlchemy           |
+| Migrations | Alembic              |
+| Containers | Docker               |
+| CI/CD      | GitHub Actions       |
+
+---
+
+# Architecture
+
+User
+
+↓ REST API
+
+Guardian (FastAPI)
+
+↓ NL-to-SQL (Groq)
+
+↓ SQL Validation
+
+↓ HMAC-Signed WebSocket Tunnel
+
+Sentry (Go)
+
+↓ SQL Validation
+
+↓ PostgreSQL Execution
+
+↑ JSON Results
+
+Guardian
+
+↓ PII Redaction
+
+↓ Audit Logging
+
+User
+
+---
+
+# Roadmap
+
+## Phase 1 — Foundation
+
+✅ Complete
+
+* Guardian service
+* Sentry agent
+* PostgreSQL integration
+* Docker deployment
+* API authentication
+* WebSocket tunnel
+* SQL validation
+* Query execution pipeline
+
+---
+
+## Phase 2 — Intelligence
+
+✅ Complete
+
+* Groq-powered NL-to-SQL
+* Schema registry
+* Schema-aware prompting
+* PII redaction
+* Redis rate limiting
+* Audit logging
+* Request correlation
+* Guardian ↔ Sentry end-to-end query execution
+* Validation against seeded development datasets
+
+---
+
+## Phase 3 — Hardening
+
+🔄 Planned
+
+### Intelligence
+
+* Multi-turn conversation context
+* Query confidence scoring
+* Query history
+
+### Database Support
+
+* MySQL support
+* SQL Server support
+
+### Security & Platform
+
+* RBAC
+* OAuth 2.0 + PKCE
+* MFA
+* Secret rotation
+* Multi-region deployment
+* Security assessment
+* Load testing
+* Operator dashboard
+
+---
+
+## Phase 4 — Stabilisation
+
+📋 Planned
+
+* Self-service onboarding
+* Public API documentation
+* SDKs
+* Webhooks
+* Multi-database routing
+* Audit log exports
+* SLA monitoring
+* Status page
+
+---
+
+# Next Milestone
+
+Deploy VaultRelay on AWS using separate Guardian and Sentry instances and publish a complete end-to-end deployment walkthrough till phase 2. 
+
+---
+
+*VaultRelay · June 2026*
+
+
 
 ## Branch Strategy
 
@@ -25,202 +296,3 @@ Two components:
 | `feature/*` | Individual feature work. PRs into develop. |
 | `chore/*` | Setup, config, tooling. PRs into develop. |
 | `docs/*` | Documentation only. PRs into main. |
-
----
-
-## PR History
-
-### Infrastructure
-| PR | Branch | Description | Status |
-|---|---|---|---|
-| #1 | `chore/monorepo-scaffold` | Folder structure, .gitignore, README, docker-compose | ✅ Merged |
-| #2 | `chore/ci-workflows` | Guardian CI + Sentry CI GitHub Actions pipelines | ✅ Merged |
-
-### Guardian — FastAPI (Python)
-| PR | Branch | Description | Status |
-|---|---|---|---|
-| #3 | `chore/guardian-scaffold` | FastAPI app, /health endpoint, Dockerfile, requirements | ✅ Merged |
-| #5 | `feature/guardian-config` | Pydantic settings, env validation, .env setup | ✅ Merged |
-| #6 | `feature/guardian-db-models` | SQLAlchemy async engine, Tenant model, Alembic migrations | ✅ Merged |
-| #7 | `feature/api-key-auth` | API key generation, SHA-256 hashing, auth dependency | ✅ Merged |
-| #9 | `feature/websocket-tunnel-server` | WS endpoint, HMAC signing, connection manager, heartbeat | ✅ Merged |
-| #19 | `feature/guardian-nl-to-sql` | Groq-powered NL-to-SQL pipeline and SQL validation | ✅ Merged |
-| #20 | `feature/guardian-schema-registry` | Schema models, context builder, aliases, PII marking | ✅ Merged |
-| #21 | `feature/guardian-pii-redaction` | Pattern and column-based PII redaction | ✅ Merged |
-| #22 | `feature/guardian-rate-limiting` | Redis sliding-window rate limiting | ✅ Merged |
-| #23 | `feature/guardian-audit-logging` | Audit model, migration, service, and middleware | ✅ Merged |
-
-### Sentry — Go
-| PR | Branch | Description | Status |
-|---|---|---|---|
-| #4 | `chore/sentry-scaffold` | Go module, config loader, /health handler, Dockerfile | ✅ Merged |
-| #10 | `feature/sentry-startup-selfcheck` | 4 startup checks, refuses to start on failure | ✅ Merged |
-| #11 | `feature/sentry-db-pool` | Connection pool, query executor, row/size/timeout limits | ✅ Merged |
-| #13 | `feature/sentry-sql-validator` | SELECT only enforcement, injection prevention, 9 tests | ✅ Merged |
-| #14 | `feature/sentry-tunnel-client` | WebSocket client, heartbeat, auto reconnect, query handler | ✅ Merged |
-| #15 | `feature/sentry-query-execution` | Wire everything, graceful shutdown, full query flow | ✅ Merged |
-
----
-
-## Current State
-
-### Guardian (/backend/guardian)
-| Feature | Status |
-|---|---|
-| FastAPI app boots | ✅ Done |
-| /health endpoint | ✅ Done |
-| Pydantic config management | ✅ Done |
-| Environment variable validation | ✅ Done |
-| SQLAlchemy async engine | ✅ Done |
-| Tenant model + migrations | ✅ Done |
-| APIKey model | ✅ Done |
-| API key generation + hashing | ✅ Done |
-| Auth middleware (X-API-Key) | ✅ Done |
-| WebSocket tunnel server | ✅ Done |
-| HMAC message signing | ✅ Done |
-| Heartbeat handling | ✅ Done |
-| NL-to-SQL (Groq) | ✅ Done |
-| Schema metadata registry | ✅ Done |
-| PII redaction engine | ✅ Done |
-| Rate limiting (Redis) | ✅ Done |
-| Audit logging | ✅ Done |
-| Multi-turn conversation context | ⬜ Phase 2 |
-| RBAC — Viewer, Analyst, Admin | ⬜ Phase 3 |
-
-### Sentry (/backend/sentry)
-| Feature | Status |
-|---|---|
-| Go binary boots | ✅ Done |
-| /health endpoint (127.0.0.1:9101) | ✅ Done |
-| Config loader (env variables) | ✅ Done |
-| Startup self-check (4 checks) | ✅ Done |
-| PostgreSQL connection pool | ✅ Done |
-| Query executor + row limits | ✅ Done |
-| Query timeout (30s default) | ✅ Done |
-| Result size limit (10MB) | ✅ Done |
-| SQL validator (SELECT only) | ✅ Done |
-| WebSocket tunnel client | ✅ Done |
-| Heartbeat every 30s | ✅ Done |
-| Auto reconnect with backoff | ✅ Done |
-| Query execution handler | ✅ Done |
-| Graceful shutdown (SIGTERM) | ✅ Done |
-| Guardian-to-Sentry query round trip | ⬜ Phase 2 |
-| MySQL + SQL Server support | ⬜ Phase 2 |
-
----
-
-## Test Coverage
-
-| Service | Test Type | Count | Status |
-|---|---|---|---|
-| Guardian | Unit + HTTP endpoint tests | 55 | ✅ Passing |
-| Sentry | Unit tests | 22 | ✅ Passing |
-
-Run the complete local quality gate with `./scripts/test-all.sh`.
-
----
-
-## Phase Roadmap
-
-### Phase 1 — Foundation
-Weeks 1-6 · ✅ COMPLETE
-_Last Phase 1 PR:_ **#17**
-✅ Monorepo scaffold
-✅ CI/CD pipelines
-✅ Guardian skeleton
-✅ Sentry skeleton
-✅ Guardian config management
-✅ Guardian DB models + Alembic
-✅ API key auth
-✅ WebSocket tunnel server (Guardian)
-✅ Sentry startup self-check
-✅ PostgreSQL connection pool (Sentry)
-✅ SQL validator (Sentry)
-✅ WebSocket tunnel client (Sentry)
-✅ Sentry query execution handler
-✅ Graceful shutdown
-⬜ Guardian-to-Sentry query dispatch and result correlation
-
----
-
-### Phase 2 — Intelligence
-Weeks 7-12 · 🔄 In Progress
-✅ PR #19 — Groq NL-to-SQL integration
-✅ PR #20 — Schema metadata registry
-✅ PR #21 — PII redaction engine
-✅ PR #22 — Rate limiting — Redis backed
-✅ PR #23 — Audit logging
-⬜ Multi-turn conversation context
-⬜ MySQL + SQL Server support in Sentry
-
----
-
-### Phase 3 — Hardening
-Weeks 13-18 · Not Started
-⬜ External penetration test
-⬜ RBAC — Viewer, Analyst, Admin roles
-⬜ OAuth 2.0 + PKCE
-⬜ MFA for Admin role
-⬜ Secret rotation — zero downtime
-⬜ Multi-region Guardian deployment
-⬜ Query confidence scoring
-⬜ Operator dashboard
-⬜ GDPR + HIPAA self assessment
-⬜ Load testing at 2x peak
-
----
-
-### Phase 4 — Stabilisation
-Weeks 19-26 · Not Started
-⬜ Self-service onboarding flow
-⬜ Public REST API docs + OpenAPI spec
-⬜ Python + Node.js SDKs
-⬜ Webhook support
-⬜ Multi-database routing per tenant
-⬜ Audit log export — CSV + JSON
-⬜ SLA monitoring + PagerDuty
-⬜ Status page
-
----
-
-## Tech Stack
-
-| Component | Language | Framework | Key Libraries |
-|---|---|---|---|
-| Guardian | Python 3.12 | FastAPI 0.115 | SQLAlchemy 2.0, Pydantic 2.8, Alembic, asyncpg, Groq, Redis |
-| Sentry | Go 1.22 | stdlib | net/http, database/sql, lib/pq, gorilla/websocket |
-| Database | PostgreSQL 16 | — | — |
-| Cache | Redis 7 | — | — |
-| CI/CD | — | GitHub Actions | ruff, pytest, go vet, go test |
-
----
-
-## Architecture
-User
-↓ REST API (X-API-Key auth)
-Guardian (FastAPI — Cloud)
-↓ NL-to-SQL (Groq)
-↓ SQL validation (SELECT only)
-↓ WebSocket tunnel (HMAC signed)
-Sentry (Go — Customer infrastructure)
-↓ SQL validation (last line of defence)
-↓ PostgreSQL connection pool
-↓ Query execution (30s timeout, 1000 row limit)
-↑ JSON result set
-Guardian
-↓ PII redaction
-↓ Audit logging
-User ← safe result
-
----
-
-## Next Up
-
-**Multi-turn conversation context**
-Add tenant-scoped conversation history so follow-up questions can reuse earlier query context safely.
-
-Then extend Sentry with MySQL and SQL Server support.
-
----
-
-*VaultRelay · Build Progress · June 2026*
