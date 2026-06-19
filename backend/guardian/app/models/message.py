@@ -25,7 +25,7 @@ class TunnelMessage(BaseModel):
 
     def _signing_payload(self) -> str:
         return (
-            f"{self.request_id}:{self.type}:"
+            f"{self.request_id}:{self.type.value}:"
             f"{self.tenant_id}:{self.payload}:{self.timestamp}"
         )
 

@@ -1,15 +1,23 @@
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from app.services.audit_logger import log_request, _redact_body
+import pytest
+
 from app.schemas.audit_log import AuditLogData
+from app.services.audit_logger import _redact_body, log_request
+
+
+def make_mock_db() -> MagicMock:
+    mock_db = MagicMock()
+    mock_db.commit = AsyncMock()
+    mock_db.rollback = AsyncMock()
+    return mock_db
 
 
 @pytest.mark.asyncio
 async def test_log_request_creates_audit_log():
     """Test that audit log is created with all fields."""
-    mock_db = AsyncMock()
+    mock_db = make_mock_db()
 
     audit_data = AuditLogData(
         tenant_id="tenant1",
@@ -42,7 +50,7 @@ async def test_log_request_creates_audit_log():
 @pytest.mark.asyncio
 async def test_log_request_redacts_passwords():
     """Test that passwords are redacted in request body."""
-    mock_db = AsyncMock()
+    mock_db = make_mock_db()
 
     audit_data = AuditLogData(
         tenant_id="tenant1",
@@ -63,7 +71,7 @@ async def test_log_request_redacts_passwords():
 @pytest.mark.asyncio
 async def test_log_request_redacts_api_keys():
     """Test that API keys are redacted."""
-    mock_db = AsyncMock()
+    mock_db = make_mock_db()
 
     audit_data = AuditLogData(
         tenant_id="tenant1",
@@ -84,7 +92,7 @@ async def test_log_request_redacts_api_keys():
 @pytest.mark.asyncio
 async def test_log_request_truncates_response_summary():
     """Test that response summary is truncated to 100 chars."""
-    mock_db = AsyncMock()
+    mock_db = make_mock_db()
     long_response = "x" * 200
 
     audit_data = AuditLogData(
@@ -102,7 +110,7 @@ async def test_log_request_truncates_response_summary():
 @pytest.mark.asyncio
 async def test_log_request_handles_invalid_json():
     """Test that invalid JSON in request body is stored as-is."""
-    mock_db = AsyncMock()
+    mock_db = make_mock_db()
 
     audit_data = AuditLogData(
         tenant_id="tenant1",
@@ -120,7 +128,7 @@ async def test_log_request_handles_invalid_json():
 @pytest.mark.asyncio
 async def test_log_request_handles_db_error():
     """Test that DB errors are gracefully handled."""
-    mock_db = AsyncMock()
+    mock_db = make_mock_db()
     mock_db.commit.side_effect = Exception("DB error")
 
     audit_data = AuditLogData(

@@ -28,15 +28,15 @@ def build_schema_context(schema: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def get_sample_schema() -> list[dict[str, Any]]:
+def get_sample_schema():
     """
     Sample schema for development and testing.
     In production this comes from the database registry.
     """
     return [
         {
-            "table_name": "users",
-            "alias": "Users",
+            "table_name": "customers",
+            "alias": "Customers",
             "columns": [
                 {
                     "column_name": "id",
@@ -46,7 +46,6 @@ def get_sample_schema() -> list[dict[str, Any]]:
                 {
                     "column_name": "name",
                     "column_type": "varchar",
-                    "alias": "Full Name",
                     "is_pii": True,
                 },
                 {
@@ -55,8 +54,18 @@ def get_sample_schema() -> list[dict[str, Any]]:
                     "is_pii": True,
                 },
                 {
-                    "column_name": "created_at",
+                    "column_name": "phone",
+                    "column_type": "varchar",
+                    "is_pii": True,
+                },
+                {
+                    "column_name": "signup_date",
                     "column_type": "timestamp",
+                    "is_pii": False,
+                },
+                {
+                    "column_name": "country",
+                    "column_type": "varchar",
                     "is_pii": False,
                 },
             ],
@@ -71,7 +80,7 @@ def get_sample_schema() -> list[dict[str, Any]]:
                     "is_pii": False,
                 },
                 {
-                    "column_name": "user_id",
+                    "column_name": "customer_id",
                     "column_type": "integer",
                     "is_pii": False,
                 },
@@ -81,15 +90,17 @@ def get_sample_schema() -> list[dict[str, Any]]:
                     "is_pii": False,
                 },
                 {
-                    "column_name": "status",
-                    "column_type": "varchar",
+                    "column_name": "order_date",
+                    "column_type": "timestamp",
                     "is_pii": False,
                 },
                 {
-                    "column_name": "created_at",
-                    "column_type": "timestamp",
+                    "column_name": "status",
+                    "column_type": "varchar",
                     "is_pii": False,
                 },
             ],
         },
     ]
+
+

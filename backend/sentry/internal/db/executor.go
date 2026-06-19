@@ -14,9 +14,9 @@ const (
 )
 
 type QueryResult struct {
-	Columns []string        `json:"columns"`
-	Rows    [][]interface{} `json:"rows"`
-	RowCount int            `json:"row_count"`
+	Columns  []string        `json:"columns"`
+	Rows     [][]interface{} `json:"rows"`
+	RowCount int             `json:"row_count"`
 }
 
 func (p *Pool) ExecuteQuery(

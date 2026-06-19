@@ -2,70 +2,100 @@
 
 > Zero-trust middleware for natural-language querying of legacy SQL databases.
 
+VaultRelay lets users ask questions in plain English while keeping customer
+databases private. Guardian generates and validates SQL in the cloud; Sentry
+runs inside the customer network, validates the query again, and executes it
+with bounded access.
+
 ## Architecture
 
-- **Guardian** — Cloud gateway (Python/FastAPI)
-- **Sentry** — Local agent (Go)
+- **Guardian** (`backend/guardian`) - FastAPI gateway for authentication,
+  Groq-powered NL-to-SQL, schema context, rate limiting, PII redaction, audit
+  logging, and WebSocket tunnel management.
+- **Sentry** (`backend/sentry`) - Go agent for startup checks, outbound tunnel
+  connectivity, SQL validation, PostgreSQL execution, and resource limits.
+- **PostgreSQL** - Tenant metadata, audit data, and the development query
+  target.
+- **Redis** - Sliding-window request rate limiting.
+
+```text
+User -> Guardian -> validated SQL -> outbound WebSocket tunnel -> Sentry
+User <- Guardian <- redacted result <- query execution <- PostgreSQL
+```
+
+## Current Status
+
+Phase 2 is in progress. The following Guardian capabilities are implemented:
+
+- Groq NL-to-SQL generation and SELECT-only validation
+- Schema metadata context and PII marking
+- Pattern-based and column-based PII redaction
+- Redis sliding-window rate limiting
+- Database-backed audit logging
+
+Sentry includes PostgreSQL pooling, query limits, SQL validation, tunnel
+reconnection, heartbeat handling, startup self-checks, and graceful shutdown.
+
+See [docs/PROGRESS.md](docs/PROGRESS.md) for the detailed roadmap.
+
+### Prototype Limitations
+
+- The NL-to-SQL endpoint currently returns validated SQL; dispatching it to a
+  connected Sentry and awaiting the result is not wired yet.
+- Guardian verifies HMAC-signed tunnel messages, but Sentry-side message
+  signing still needs to be implemented.
+- The development tunnel uses `ws://`; production deployment requires TLS with
+  `wss://`.
+
+## Test The Project
+
+Install the Guardian dependencies in `backend/guardian/venv`, then run:
+
+```bash
+./scripts/test-all.sh
+```
+
+The command runs:
+
+- Ruff over Guardian application and test code
+- All Guardian unit and HTTP endpoint tests
+- `gofmt` verification for Sentry
+- `go vet ./...`
+- All Sentry tests
+
+Current verified result:
+
+```text
+Guardian: 55 passed
+Sentry:   22 passed
+```
+
+## Run Locally
+
+Set a Groq API key and start the development stack:
+
+```bash
+export GROQ_API_KEY="your-key"
+docker-compose up --build
+```
+
+Guardian is exposed at `http://localhost:8000`, with health status at
+`http://localhost:8000/health`.
 
 ## Repository Structure
 
-vaultrelay/ ├── guardian/ # FastAPI cloud gateway ├── sentry/ # Go local agent ├── docs/ # PRD and architecture docs ├── scripts/ # Dev and deployment scripts └── .github/ # CI/CD workflows
+```text
+vaultrelay/
+├── backend/
+│   ├── guardian/       # Python/FastAPI gateway
+│   └── sentry/         # Go local agent
+├── docs/               # PRD and progress documentation
+├── scripts/            # Development and validation scripts
+├── .github/workflows/  # Guardian and Sentry CI
+└── docker-compose.yml  # Local development stack
+```
 
+## Product Requirements
 
-## Development
-
-See `docs/VaultRelay-PRD-1.md` for full product requirements.
-
-## Phases
-
-Phase 1 — Foundation (Weeks 1–6)
-The skeleton. Everything talks to everything.
-
-Monorepo scaffold, CI/CD setup
-Guardian skeleton — FastAPI, tenant registry, API key auth
-Sentry skeleton — Go binary, startup self-check, DB connection pool
-WebSocket tunnel — outbound from Sentry to Guardian, HMAC signing, TLS
-SQL validation — SELECT only, reject everything else
-Read-only credential enforcement
-Integration test harness — round trip from Guardian to Sentry and back
-
-Exit criteria: Encrypted round-trip from NL input to SQL result confirmed.
-
-Phase 2 — Intelligence (Weeks 7–12)
-The brain. Natural language actually works.
-
-Claude Sonnet API integrated for NL-to-SQL
-Schema metadata registry — what tables/columns the LLM can see
-PII redaction engine — emails, phones, SSNs, credit cards
-Rate limiting — per user and per tenant, Redis backed
-Audit logging — every query logged with request ID, user, timestamp
-Multi-turn conversation context — 10 turn memory
-MySQL and SQL Server support added to Sentry
-
-Exit criteria: Two pilot tenants running real queries. Zero data leakage.
-
-Phase 3 — Hardening (Weeks 13–18)
-Security and compliance. No shortcuts.
-
-External penetration test — all Critical and High findings fixed
-RBAC — Viewer, Analyst, Admin roles fully implemented
-OAuth 2.0 + PKCE — proper auth flow, MFA for Admin
-Secret rotation — zero downtime key rotation for Sentry
-Multi-region Guardian deployment — EU, US, APAC
-Query confidence scoring — low confidence = clarification prompt, not execution
-Operator dashboard — Sentry health, tunnel status, query volume, errors
-GDPR + HIPAA self assessment complete
-Load testing at 2× peak load
-
-Exit criteria: Pen test sign-off. Compliance assessment done. Load test passing.
-
-Phase 4 — Stabilisation (Weeks 19–26)
-Production ready. Operators can self-serve.
-
-Self-service onboarding — account creation, Sentry download, config wizard
-Public REST API docs + OpenAPI spec
-Python and Node.js SDKs
-Webhook support — post-query callbacks
-Multi-database routing per tenant
-Audit log export — CSV and JSON
-SLA monitoring — PagerDuty, status page
+See [docs/VaultRelay-PRD-1.md](docs/VaultRelay-PRD-1.md) for the full product
+requirements and security model.
