@@ -102,8 +102,9 @@ Two components:
 | WebSocket tunnel client | ✅ Done |
 | Heartbeat every 30s | ✅ Done |
 | Auto reconnect with backoff | ✅ Done |
-| Query execution end to end | ✅ Done |
+| Query execution handler | ✅ Done |
 | Graceful shutdown (SIGTERM) | ✅ Done |
+| Guardian-to-Sentry query round trip | ⬜ Phase 2 |
 | MySQL + SQL Server support | ⬜ Phase 2 |
 
 ---
@@ -112,9 +113,10 @@ Two components:
 
 | Service | Test Type | Count | Status |
 |---|---|---|---|
-| Guardian | Core unit tests | 53 | ✅ Passing |
-| Guardian | Endpoint/integration tests | 2 | ⚠️ Require service-backed test setup |
+| Guardian | Unit + HTTP endpoint tests | 55 | ✅ Passing |
 | Sentry | Unit tests | 22 | ✅ Passing |
+
+Run the complete local quality gate with `./scripts/test-all.sh`.
 
 ---
 
@@ -135,8 +137,9 @@ _Last Phase 1 PR:_ **#17**
 ✅ PostgreSQL connection pool (Sentry)
 ✅ SQL validator (Sentry)
 ✅ WebSocket tunnel client (Sentry)
-✅ Query execution end to end
+✅ Sentry query execution handler
 ✅ Graceful shutdown
+⬜ Guardian-to-Sentry query dispatch and result correlation
 
 ---
 

@@ -6,11 +6,11 @@ import (
 )
 
 type Config struct {
-	TenantID    string
-	Secret      string
-	DBDSN       string
-	GuardianURL string
-	RowLimit    int
+	TenantID     string
+	Secret       string
+	DBDSN        string
+	GuardianURL  string
+	RowLimit     int
 	QueryTimeout int
 }
 

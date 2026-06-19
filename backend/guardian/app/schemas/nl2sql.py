@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -7,3 +9,4 @@ class NLQueryRequest(BaseModel):
 
 class NLQueryResponse(BaseModel):
     sql: str
+    results: dict[str, Any] | None = None

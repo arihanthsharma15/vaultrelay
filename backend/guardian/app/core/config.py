@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = True
     rate_limit_requests_per_minute: int = 100
 
+    # Audit Logging
+    audit_logging_enabled: bool = True
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -1,31 +1,44 @@
-version: "3.9"
-
 services:
   guardian:
     build:
-      context: ./guardian
+      context: ./backend/guardian
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    env_file:
-      - ./guardian/.env
+    environment:
+      APP_ENV: development
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key}
+      DATABASE_URL: postgresql://vaultrelay:vaultrelay@postgres:5432/vaultrelay
+      REDIS_URL: redis://redis:6379
+      GROQ_API_KEY: ${GROQ_API_KEY:-development-placeholder}
     depends_on:
-      - postgres
-      - redis
-
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+      interval: 5s
+      timeout: 3s
+      retries: 10
   sentry:
     build:
-      context: ./sentry
+      context: ./backend/sentry
       dockerfile: Dockerfile
     environment:
-      VAULTRELAY_TENANT_ID: ${TENANT_ID}
-      VAULTRELAY_SECRET: ${SECRET}
-      DB_DSN: ${DB_DSN}
+      VAULTRELAY_TENANT_ID: ${TENANT_ID:-development}
+      VAULTRELAY_SECRET: ${TUNNEL_SECRET:-dev-tunnel-secret}
+      DB_DSN: postgres://vaultrelay_ro:vaultrelay_ro@postgres:5432/customer_demo?sslmode=disable
       GUARDIAN_URL: ws://guardian:8000/ws
     depends_on:
-      - guardian
-    network_mode: host
-
+      guardian:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
   postgres:
     image: postgres:16-alpine
     environment:
@@ -36,11 +49,20 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-
+      - ./backend/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vaultrelay -d vaultrelay"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 volumes:
   pgdata:

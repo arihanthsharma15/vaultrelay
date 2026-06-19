@@ -4,7 +4,7 @@ os.environ["SECRET_KEY"] = "test-secret"
 os.environ["DATABASE_URL"] = "postgresql://test:test@localhost/test"
 os.environ["GROQ_API_KEY"] = "test-groq-key"
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 

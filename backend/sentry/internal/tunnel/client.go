@@ -2,21 +2,25 @@ package tunnel
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 const (
-	HeartbeatInterval  = 30 * time.Second
-	ReconnectDelay     = 5 * time.Second
-	HandshakeTimeout   = 10 * time.Second
-	WriteTimeout       = 10 * time.Second
-	MaxReconnectDelay  = 60 * time.Second
+	HeartbeatInterval = 30 * time.Second
+	ReconnectDelay    = 5 * time.Second
+	HandshakeTimeout  = 10 * time.Second
+	WriteTimeout      = 10 * time.Second
+	MaxReconnectDelay = 60 * time.Second
 )
 
 type MessageType string
@@ -47,6 +51,14 @@ type Client struct {
 	conn         *websocket.Conn
 	queryHandler QueryHandler
 	done         chan struct{}
+
+	// writeMu guards c.conn.WriteMessage. gorilla/websocket connections
+	// are NOT safe for concurrent writes — heartbeat() runs on its own
+	// goroutine while handleMessage() is spawned per incoming message
+	// (via `go c.handleMessage(msg)`), and both can call send() at the
+	// same time. Without this lock, two goroutines writing to the same
+	// connection simultaneously can interleave/corrupt frames on the wire.
+	writeMu sync.Mutex
 }
 
 func NewClient(
@@ -74,9 +86,9 @@ func (c *Client) Start(ctx context.Context) {
 		default:
 		}
 
-		log.Printf("Connecting to Guardian at %s...", c.guardianURL)
+		log.Printf("[SENTRY] Connecting to Guardian at %s...", c.guardianURL)
 		if err := c.connect(ctx); err != nil {
-			log.Printf("Connection failed: %v. Retrying in %s", err, delay)
+			log.Printf("[SENTRY] Connection failed: %v. Retrying in %s", err, delay)
 			select {
 			case <-ctx.Done():
 				return
@@ -88,9 +100,9 @@ func (c *Client) Start(ctx context.Context) {
 
 		// Reset delay on successful connection
 		delay = ReconnectDelay
-		log.Println("Connected to Guardian successfully")
+		log.Printf("[SENTRY] Connected to Guardian successfully (tenant=%s)", c.tenantID)
 		c.run(ctx)
-		log.Println("Connection lost. Reconnecting...")
+		log.Println("[SENTRY] Connection lost. Reconnecting...")
 	}
 }
 
@@ -127,16 +139,17 @@ func (c *Client) run(ctx context.Context) {
 
 		_, raw, err := c.conn.ReadMessage()
 		if err != nil {
-			log.Printf("Read error: %v", err)
+			log.Printf("[SENTRY] Read error: %v", err)
 			return
 		}
 
 		var msg Message
 		if err := json.Unmarshal(raw, &msg); err != nil {
-			log.Printf("Failed to parse message: %v", err)
+			log.Printf("[SENTRY] Failed to parse message: %v", err)
 			continue
 		}
 
+		log.Printf("[SENTRY] <- received type=%s request_id=%s", msg.Type, msg.RequestID)
 		go c.handleMessage(msg)
 	}
 }
@@ -144,19 +157,32 @@ func (c *Client) run(ctx context.Context) {
 func (c *Client) handleMessage(msg Message) {
 	switch msg.Type {
 	case TypeHeartbeatACK:
-		log.Printf("Heartbeat ACK received: request_id=%s", msg.RequestID)
+		log.Printf("[SENTRY] Heartbeat ACK received: request_id=%s", msg.RequestID)
 
 	case TypeQuery:
-		log.Printf("Query received: request_id=%s", msg.RequestID)
+		start := time.Now()
+		log.Printf("[SENTRY] Query received: request_id=%s sql=%q", msg.RequestID, msg.Payload)
+
 		result, err := c.queryHandler(msg.Payload, msg.RequestID)
+		elapsed := time.Since(start)
+
 		if err != nil {
+			log.Printf(
+				"[SENTRY] Query FAILED: request_id=%s duration=%s error=%v",
+				msg.RequestID, elapsed, err,
+			)
 			c.sendError(msg.RequestID, err.Error())
 			return
 		}
+
+		log.Printf(
+			"[SENTRY] Query OK: request_id=%s duration=%s result_bytes=%d",
+			msg.RequestID, elapsed, len(result),
+		)
 		c.sendResult(msg.RequestID, result)
 
 	default:
-		log.Printf("Unknown message type: %s", msg.Type)
+		log.Printf("[SENTRY] Unknown message type: %s", msg.Type)
 	}
 }
 
@@ -175,10 +201,10 @@ func (c *Client) heartbeat(ctx context.Context) {
 				Timestamp: time.Now().Unix(),
 			}
 			if err := c.send(msg); err != nil {
-				log.Printf("Heartbeat failed: %v", err)
+				log.Printf("[SENTRY] Heartbeat failed: %v", err)
 				return
 			}
-			log.Println("Heartbeat sent")
+			log.Println("[SENTRY] Heartbeat sent")
 		}
 	}
 }
@@ -192,7 +218,9 @@ func (c *Client) sendResult(requestID string, payload string) {
 		Timestamp: time.Now().Unix(),
 	}
 	if err := c.send(msg); err != nil {
-		log.Printf("Failed to send result: %v", err)
+		log.Printf("[SENTRY] Failed to send result: %v", err)
+	} else {
+		log.Printf("[SENTRY] -> sent result request_id=%s", requestID)
 	}
 }
 
@@ -205,20 +233,32 @@ func (c *Client) sendError(requestID string, errMsg string) {
 		Timestamp: time.Now().Unix(),
 	}
 	if err := c.send(msg); err != nil {
-		log.Printf("Failed to send error: %v", err)
+		log.Printf("[SENTRY] Failed to send error: %v", err)
+	} else {
+		log.Printf("[SENTRY] -> sent error request_id=%s", requestID)
 	}
 }
 
+func (c *Client) sign(msg Message) string {
+	payload := fmt.Sprintf("%s:%s:%s:%s:%d", msg.RequestID, msg.Type, msg.TenantID, msg.Payload, msg.Timestamp)
+	h := hmac.New(sha256.New, []byte(c.secret))
+	h.Write([]byte(payload))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 func (c *Client) send(msg Message) error {
+	msg.HMAC = c.sign(msg)
 	data, err := json.Marshal(msg)
 	if err != nil {
 		return fmt.Errorf("marshal failed: %w", err)
 	}
 
+	c.writeMu.Lock()
+	defer c.writeMu.Unlock()
+
 	c.conn.SetWriteDeadline(time.Now().Add(WriteTimeout))
 	return c.conn.WriteMessage(websocket.TextMessage, data)
 }
-
 func min(a, b time.Duration) time.Duration {
 	if a < b {
 		return a

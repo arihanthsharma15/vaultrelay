@@ -44,6 +44,9 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
 
         response = await call_next(request)
 
+        if not settings.audit_logging_enabled:
+            return response
+
         try:
             duration_ms = int((time.time() - start_time) * 1000)
 
